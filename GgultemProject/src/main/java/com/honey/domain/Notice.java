@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.honey.common.BaseTimeEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -51,11 +53,13 @@ public class Notice extends BaseTimeEntity {
 
     @Column(nullable = false)
     private Integer enabled;
+    
+    private int viewCount;
 
     @Column(name = "DTD_DATE")
     private LocalDateTime dtdDate;
 
-    @ElementCollection 
+    @ElementCollection
 	@Builder.Default 
 	private List<NoticeImage> noticeImage = new ArrayList<>(); 
 
@@ -77,6 +81,15 @@ public class Notice extends BaseTimeEntity {
             this.dtdDate = LocalDateTime.now();
         }
     }
+    
+    public void changeViewCount(int viewCount) {
+    	this.viewCount = viewCount;
+    }
+    
+    public void setMember(Member member) {
+    	this.member = member;
+    }
+
     
     public void addImage(NoticeImage image) {
 		image.setOrd(this.noticeImage.size());

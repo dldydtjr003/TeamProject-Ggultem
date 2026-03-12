@@ -24,7 +24,8 @@ public class NoticeDTO {
     private String title;
     private String content;
     private Integer enabled;
-    private Member member;
+    private Long memberNo;
+    private Integer viewCount;
 	
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -42,5 +43,6 @@ public class NoticeDTO {
 	
 	@Builder.Default
 	private List<String> uploadFileNames = new ArrayList<>();
-
+	
+	
 }

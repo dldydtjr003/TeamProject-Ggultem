@@ -11,10 +11,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.honey.domain.Member;
 import com.honey.domain.Notice;
 import com.honey.dto.NoticeDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.repository.MemberRepository;
 import com.honey.repository.NoticeRepository;
 import com.honey.util.CustomFileUtil;
 
@@ -30,12 +32,15 @@ public class NoticeServiceImpl implements NoticeService {
     private final ModelMapper modelMapper;
     private final NoticeRepository noticeRepository;
     private final CustomFileUtil fileUtil;
+    private final MemberRepository memberRepository;
 
     @Override
     public NoticeDTO get(Long noticeId) {
         // 1. 조회 (Optional 활용)
         java.util.Optional<Notice> result = noticeRepository.findById(noticeId);
         Notice notice = result.orElseThrow();
+        
+        notice.changeViewCount(notice.getViewCount() + 1);
         
         // 2. ModelMapper를 이용해 엔티티의 기본 필드를 DTO로 복사
         NoticeDTO noticeDTO = modelMapper.map(notice, NoticeDTO.class);
@@ -58,7 +63,9 @@ public class NoticeServiceImpl implements NoticeService {
 
     @Override
     public Long register(NoticeDTO noticeDTO) {
-        Notice notice = modelMapper.map(noticeDTO, Notice.class);
+        Member member = Member.builder().no(noticeDTO.getMemberNo()).build();
+        
+        Notice notice = Notice.builder().title(noticeDTO.getTitle()).content(noticeDTO.getContent()).viewCount(0).member(member).build();
         
         // 이미지 추가 로직 (DTO의 파일명을 Entity로)
         if(noticeDTO.getUploadFileNames() != null) {
@@ -80,26 +87,27 @@ public class NoticeServiceImpl implements NoticeService {
         // 제목, 내용 수정
         notice.changeTitle(noticeDTO.getTitle());
         notice.changeContent(noticeDTO.getContent());
-        
-        // 상태 변경 체크
-        if (notice.getEnabled() != noticeDTO.getEnabled()) {
-            notice.changeStatus(noticeDTO.getEnabled());
-        }
 
         // 이미지 교체 로직 (Member의 updateToThumbnail 참고)
         // 기존 파일 삭제
         List<String> oldFileNames = notice.getNoticeImage().stream()
                 .map(img -> img.getFileName()).collect(Collectors.toList());
-        fileUtil.deleteFiles(oldFileNames);
         
-        notice.clearList(); // 기존 리스트 비우기
+        if (oldFileNames != null && !oldFileNames.isEmpty()) {
+	        fileUtil.deleteFiles(oldFileNames);
+	    }
+        
+     // [중요] 기존 리스트를 비우고
+        notice.clearList(); 
 
-        // 새 파일 추가
+        // [중요] 새 파일명을 추가할 때 noticeImage 리스트 자체가 새로 할당되거나 
+        // 제대로 인지되도록 addImageString을 호출
         List<String> newFileNames = noticeDTO.getUploadFileNames();
-        if (newFileNames != null) {
+        if (newFileNames != null && !newFileNames.isEmpty()) {
             newFileNames.forEach(notice::addImageString);
         }
 
+        // 4. 명시적으로 save 호출 (Dirty Checking에만 의존하지 않음)
         noticeRepository.save(notice);
     }
 
@@ -107,6 +115,20 @@ public class NoticeServiceImpl implements NoticeService {
     public void remove(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId).orElseThrow();
         notice.changeStatus(0); // 논리 삭제 (Member와 동일)
+        
+     // 2. 기존 이미지 파일들 삭제 (CustomFileUtil 활용)
+        List<String> oldFileNames = notice.getNoticeImage().stream()
+                .map(image -> image.getFileName())
+                .collect(Collectors.toList());
+        
+        if (oldFileNames != null && !oldFileNames.isEmpty()) {
+            fileUtil.deleteFiles(oldFileNames);
+        }
+
+        // 3. 기존 리스트 비우고 새 이미지 파일명 추가
+        notice.clearList();
+        
+        
         noticeRepository.save(notice);
     }
 
