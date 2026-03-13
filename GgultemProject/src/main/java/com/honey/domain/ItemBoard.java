@@ -55,6 +55,8 @@ public class ItemBoard extends BaseTimeEntity {
 	private String category;
 
 	private String status;
+	
+	private int enabled;
 
 	@Column(nullable = false)
 	private String location;
@@ -90,9 +92,17 @@ public class ItemBoard extends BaseTimeEntity {
 	public void changeStatus(String status) {
 		this.status = status;
 	}
+	
+	public void changeEnabled(int enabled) {
+		this.enabled = enabled;
+	}
 
 	public void changeLocation(String location) {
 		this.location = location;
+	}
+	
+	public void chanceViewCount(int viewCount) {
+		this.viewCount = viewCount;
 	}
 
 	public void addImage(ItemBoardImage image) {

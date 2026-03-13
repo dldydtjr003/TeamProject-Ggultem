@@ -2,6 +2,7 @@ package com.honey.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,12 +27,12 @@ import lombok.extern.log4j.Log4j2;
 @RequestMapping("/honey/itemBoard")
 public class ItemBoardController {
 
-	private final ItemBoardService service;
+	private final ItemBoardService itemBoardService;
 	private final CustomFileUtil fileUtil;
 
 	@GetMapping("/{id}")
 	public ItemBoardDTO getItemBoard(@PathVariable(name = "id") Long id) {
-		return service.get(id);
+		return itemBoardService.get(id);
 	}
 
 	@PostMapping("/")
@@ -39,36 +40,62 @@ public class ItemBoardController {
 
 		// 1. 포스트맨에서 보낸 파일이 서버에 "진짜로" 도착했는지 확인
 		List<MultipartFile> files = itemBoardDTO.getFiles();
-		log.info("1. [컨트롤러] 요청에 포함된 실제 파일 개수: " + (files != null ? files.size() : 0));
 
 		// 2. 파일 유틸이 일을 제대로 했는지 확인
 		List<String> uploadFileNames = fileUtil.saveFiles(files);
-		log.info("2. [컨트롤러] 파일 유틸이 저장 후 반환한 이름들: " + uploadFileNames);
 
 		// 3. DTO에 제대로 세팅했는지 확인
 		itemBoardDTO.setUploadFileNames(uploadFileNames);
-		log.info("3. [컨트롤러] 서비스로 넘기기 직전 DTO 상태: " + itemBoardDTO.getUploadFileNames());
 
-		Long id = service.register(itemBoardDTO);
+		Long id = itemBoardService.register(itemBoardDTO);
 		return Map.of("id", id);
 	}
 
 	@GetMapping("/list")
 	public PageResponseDTO<ItemBoardDTO> list(PageRequestDTO pageRequestDTO) {
 		log.info(pageRequestDTO);
-		return service.list(pageRequestDTO);
+		return itemBoardService.list(pageRequestDTO);
 	}
 
 	@PutMapping("/{id}")
 	public Map<String, String> modify(@PathVariable(name = "id") Long id, ItemBoardDTO itemBoardDTO) {
 		itemBoardDTO.setId(id);
-		service.modify(itemBoardDTO);
+
+		ItemBoardDTO oldItemDTO = itemBoardService.get(id);
+		
+		List<String> oldFileNames = oldItemDTO.getUploadFileNames();
+		
+		List<MultipartFile> files = itemBoardDTO.getFiles();
+		
+		List<String> currentUploadFileNames = null;
+		
+		if(files != null && !files.get(0).isEmpty()) {
+			currentUploadFileNames = fileUtil.saveFiles(files);
+		}
+		
+		List<String> uploadedFileNames = itemBoardDTO.getUploadFileNames();
+		
+		if(currentUploadFileNames != null && !currentUploadFileNames.isEmpty()) {
+			uploadedFileNames.addAll(currentUploadFileNames);
+		}
+
+		itemBoardService.modify(itemBoardDTO);
+		
+		if(oldFileNames != null && !oldFileNames.isEmpty()) {
+			List<String> removeFiles = oldFileNames.stream().filter(
+					fileName -> uploadedFileNames.indexOf(fileName) == -1).collect(Collectors.toList());
+			fileUtil.deleteFiles(removeFiles);
+		}
 		return Map.of("RESULT", "SUCCESS");
 	}
 
-	@PutMapping("/delete/{id}")
+	@GetMapping("/delete/{id}")
 	public Map<String, String> remove(@PathVariable(name = "id") Long id) {
-		service.remove(id);
+		List<String> oldFileNames = itemBoardService.get(id).getUploadFileNames();
+		itemBoardService.remove(id);
+		
+		fileUtil.deleteFiles(oldFileNames);
+		
 		return Map.of("RESULT", "SUCCESS");
 	}
 
