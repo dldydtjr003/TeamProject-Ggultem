@@ -12,8 +12,10 @@ public interface BusinessMemberService {
 
 	public Long register(BusinessMemberDTO businessMemberDTO);
 
-	public void modify(BusinessMemberDTO bMemberDTO);
+	public void approve(BusinessMemberDTO bMemberDTO);
 
 	public void remove(Long no);
+
+	public void modify(BusinessMemberDTO bMemberDTO);
 
 }

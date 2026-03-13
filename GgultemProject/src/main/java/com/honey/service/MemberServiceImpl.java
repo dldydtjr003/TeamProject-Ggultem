@@ -38,6 +38,8 @@ public class MemberServiceImpl implements MemberService {
 		Member member = result.orElseThrow();
 
 		MemberDTO memberDTO = modelMapper.map(member, MemberDTO.class);
+		
+		memberDTO.setAuth(member.getAuthSet());
 
 		List<String> fileNameList = member.getThumbnailList().stream().map(thumbnail -> thumbnail.getFileName())
 				.collect(Collectors.toList());

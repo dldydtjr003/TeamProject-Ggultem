@@ -64,13 +64,16 @@ public class BusinessMember extends BaseTimeEntity {
     private LocalDateTime stopEndDate;  // 정지 종료일
     
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "member_auth", joinColumns = @JoinColumn(name = "business_member_no"))
-    @Column(name = "auth") // 권한 내용이 들어갈 컬럼명
+    @CollectionTable(name = "business_member_auth", joinColumns = @JoinColumn(name = "business_member_no"))
+    @Column(name = "role")
     @Builder.Default
     private Set<String> authSet = new HashSet<>();
     
     public void addRole(String role) {
-        authSet.add(role);
+    	if(this.authSet == null) {
+    		this.authSet = new HashSet<>();
+    	}
+        this.authSet.add(role);
     }
 	
     public void changeStatus(int newStatus) {

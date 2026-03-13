@@ -2,6 +2,7 @@ package com.honey.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -36,8 +37,11 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 	public BusinessMemberDTO get(Long no) {
 		Optional<BusinessMember> result = bMemberRepository.findById(no);
 		BusinessMember bMember = result.orElseThrow();
+		Set<String> authSet = bMember.getAuthSet();
 		
 		BusinessMemberDTO bMemberDTO = modelMapper.map(bMember, BusinessMemberDTO.class);
+		
+		bMemberDTO.setAuth(authSet);
 		
 		return bMemberDTO;
 	}
@@ -76,12 +80,12 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 	}
 
 	@Override
-	public void modify(BusinessMemberDTO bMemberDTO) {
+	public void approve(BusinessMemberDTO bMemberDTO) {
 		Optional<BusinessMember> result = bMemberRepository.findById(bMemberDTO.getNo());
 		BusinessMember bMember = result.orElseThrow();
 		
-		bMember.changePw(bMemberDTO.getPw());
 		bMember.changeStatus(1);
+		bMember.addRole("ROLE_BUSINESS_MEMBER");
 		
 		bMemberRepository.save(bMember);
 	}
@@ -92,6 +96,16 @@ public class BusinessMemberServiceImpl implements BusinessMemberService {
 		BusinessMember bMember = result.orElseThrow();
 		
 		bMember.changeStatus(0);
+		
+		bMemberRepository.save(bMember);
+	}
+
+	@Override
+	public void modify(BusinessMemberDTO bMemberDTO) {
+		Optional<BusinessMember> result = bMemberRepository.findById(bMemberDTO.getNo());
+		BusinessMember bMember = result.orElseThrow();
+		
+		bMember.changePw(bMemberDTO.getPw());
 		
 		bMemberRepository.save(bMember);
 	}

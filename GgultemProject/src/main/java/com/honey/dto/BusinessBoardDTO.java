@@ -2,9 +2,7 @@ package com.honey.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,37 +17,32 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MemberDTO {
+public class BusinessBoardDTO {
 	
 	private Long no;
-	private String id;
-	private String pw;
-	private String rrn;
-	private String nickName;
-	private String location;
-	private String phone;
-	private String email;
+	private String title;
+	private Integer price;
+	private String category;
+	private String content;
+	private String businessMemberId;
+	private String writer;
 	private Integer enabled;
-	private Set<String> auth = new HashSet<>();
+	private String sign;
+	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime regDate;
-	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime updDate;
-	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime dtdDate;
-	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime stopDate;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-	private LocalDateTime stopEndDate;
+	private LocalDateTime endDate;
 	
 	@Builder.Default
 	private List<MultipartFile> files = new ArrayList<>();
 	
 	@Builder.Default
 	private List<String> uploadFileNames = new ArrayList<>();
+	
 	
 }
