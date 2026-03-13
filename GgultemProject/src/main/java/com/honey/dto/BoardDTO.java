@@ -9,9 +9,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @Builder // Builder 패턴 객체 생성
 @AllArgsConstructor // 매개변수 자동 생성
 @NoArgsConstructor // 매개변수 없는 기본 생성

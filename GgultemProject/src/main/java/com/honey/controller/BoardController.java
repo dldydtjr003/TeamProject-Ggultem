@@ -35,6 +35,7 @@ public class BoardController {
 	// 게시글 등록
 	@PostMapping("/")
 	public Map<String, Integer> register(@RequestBody BoardDTO boardDTO) {
+		log.info("보드정보내오ㅓㄴㄹ리ㅣ닝니"+boardDTO.toString());
 		Integer boardNo = service.register(boardDTO);
 		return Map.of("BOARD_NO", boardNo);
 	}
