@@ -1,6 +1,5 @@
 package com.honey.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,7 +89,7 @@ public class ItemBoardController {
 		return Map.of("RESULT", "SUCCESS");
 	}
 
-	@PutMapping("/delete/{id}")
+	@GetMapping("/delete/{id}")
 	public Map<String, String> remove(@PathVariable(name = "id") Long id) {
 		List<String> oldFileNames = itemBoardService.get(id).getUploadFileNames();
 		itemBoardService.remove(id);

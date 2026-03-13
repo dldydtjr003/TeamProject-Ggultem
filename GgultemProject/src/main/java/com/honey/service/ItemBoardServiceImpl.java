@@ -36,6 +36,10 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 	public ItemBoardDTO get(Long id) {
 		Optional<ItemBoard> result = itemBoardRepository.findById(id);
 		ItemBoard itemBoard = result.orElseThrow();
+		
+		itemBoard.chanceViewCount(itemBoard.getViewCount()+1);
+		
+		itemBoardRepository.save(itemBoard);
 
 		ItemBoardDTO itemBoardDTO = modelMapper.map(itemBoard, ItemBoardDTO.class);
 
@@ -62,7 +66,7 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 		ItemBoard itemBoard = ItemBoard.builder().title(itemBoardDTO.getTitle()).writer(itemBoardDTO.getWriter())
 				.price(itemBoardDTO.getPrice()).content(itemBoardDTO.getContent()).category(itemBoardDTO.getCategory())
 				.location(itemBoardDTO.getLocation()).itemUrl(itemBoardDTO.getItemUrl())
-				.pictureUrl(itemBoardDTO.getPictureUrl()).build();
+				.pictureUrl(itemBoardDTO.getPictureUrl()).enabled(0).status("판매중").build();
 		// 업로드 처리가 끝난 파일들의 이름 리스트
 		List<String> uploadFileNames = itemBoardDTO.getUploadFileNames();
 		if (uploadFileNames == null) {
@@ -79,7 +83,7 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 	public PageResponseDTO<ItemBoardDTO> list(PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, pageRequestDTO.getSize(),
 				Sort.by("id").descending());
-		Page<ItemBoard> result = itemBoardRepository.findAll(pageable);
+		Page<ItemBoard> result = itemBoardRepository.findAllList(pageable);
 		List<ItemBoardDTO> dtoList = result.getContent().stream()
 				.map(itemBoard -> modelMapper.map(itemBoard, ItemBoardDTO.class)).collect(Collectors.toList());
 		long totalCount = result.getTotalElements();
@@ -106,12 +110,15 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 		}
 		
 		itemBoard.changeTitle(itemBoardDTO.getTitle());
-		itemBoard.changeWriter(itemBoardDTO.getWriter());
 		itemBoard.changePrice(itemBoardDTO.getPrice());
 		itemBoard.changeContent(itemBoardDTO.getContent());
 		itemBoard.changeCategory(itemBoardDTO.getCategory());
-		itemBoard.changeStatus(itemBoardDTO.getStatus());
 		itemBoard.changeLocation(itemBoardDTO.getLocation());
+		
+		// 판매 상태(판매중, 판매완료)
+		if(itemBoardDTO.getStatus() != null && !itemBoardDTO.getStatus().isEmpty()) {
+			itemBoard.changeStatus(itemBoardDTO.getStatus());
+		}
 
 		List<String> uploadFileNames = itemBoardDTO.getUploadFileNames();
 		if (uploadFileNames != null && uploadFileNames.isEmpty()) {
@@ -126,8 +133,10 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 	public void remove(Long id) {
 		Optional<ItemBoard> result = itemBoardRepository.findById(id);
 		ItemBoard itemBoard = result.orElseThrow();
+		
+		itemBoard.changeEnabled(1);
 
-		itemBoardRepository.delete(itemBoard);
+		itemBoardRepository.save(itemBoard);
 	}
 
 }
