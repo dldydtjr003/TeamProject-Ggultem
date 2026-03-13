@@ -29,13 +29,17 @@ public class BoardController {
 	// 게시글 조회
 	@GetMapping("/{boardNo}")
 	public BoardDTO getBoard(@PathVariable(name = "boardNo") Integer boardNo) {
-		return service.read(boardNo);
+		return service.get(boardNo);
 	}
 
 	// 게시글 등록
 	@PostMapping("/")
-	public Map<String, Integer> register(@RequestBody BoardDTO boardDTO) {
+	public Map<String, Integer> register(BoardDTO boardDTO) {
+
+		log.info(boardDTO);
+
 		Integer boardNo = service.register(boardDTO);
+
 		return Map.of("BOARD_NO", boardNo);
 	}
 
@@ -48,16 +52,17 @@ public class BoardController {
 
 	// 게시글 수정
 	@PutMapping("/{boardNo}")
-	public Map<String, String> modify(@PathVariable(name = "boardNo") Integer boardNo, @RequestBody BoardDTO boardDTO) {
+	public Map<String, String> modify(@PathVariable(name = "boardNo") Integer boardNo, BoardDTO boardDTO) {
 
 		boardDTO.setBoardNo(boardNo);
+
 		service.modify(boardDTO);
 
 		return Map.of("RESULT", "SUCCESS");
 	}
 
 	// 게시글 삭제
-	@PutMapping("/delete/{boardNo}")
+	@GetMapping("/delete/{boardNo}")
 	public Map<String, String> remove(@PathVariable(name = "boardNo") Integer boardNo) {
 		service.remove(boardNo);
 
