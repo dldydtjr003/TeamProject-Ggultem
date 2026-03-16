@@ -3,6 +3,7 @@ package com.honey.service;
 import com.honey.dto.ChatRoomDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 
 public interface ChatRoomService {
 
@@ -10,7 +11,7 @@ public interface ChatRoomService {
 
 	public Long register(ChatRoomDTO chatRoomDTO);
 
-	public PageResponseDTO<ChatRoomDTO> list(PageRequestDTO pageRequestDTO);
+	public PageResponseDTO<ChatRoomDTO> list(SearchDTO searchDTO);
 
 	public void modify(ChatRoomDTO chatRoomDTO);
 
