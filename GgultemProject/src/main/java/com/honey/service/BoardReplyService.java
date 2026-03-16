@@ -20,4 +20,5 @@ public interface BoardReplyService {
     void remove(Long no);
 
 
+    
 }

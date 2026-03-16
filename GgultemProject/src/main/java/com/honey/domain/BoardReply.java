@@ -81,4 +81,5 @@ public class BoardReply extends BaseTimeEntity {
 		}
 	}
 	
+	
 }

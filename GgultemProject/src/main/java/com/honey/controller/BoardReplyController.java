@@ -47,4 +47,5 @@ public class BoardReplyController {
 
 		return "SUCCESS";
 	}
+	
 }
