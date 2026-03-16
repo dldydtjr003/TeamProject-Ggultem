@@ -11,11 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.honey.dto.ChatRoomDTO;
+import com.honey.dto.BlackListDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
-import com.honey.dto.SearchDTO;
-import com.honey.service.ChatRoomService;
+import com.honey.service.BlackListService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -23,25 +22,25 @@ import lombok.extern.log4j.Log4j2;
 @RestController
 @RequiredArgsConstructor
 @Log4j2
-@RequestMapping("/chatroom")
-public class ChatRoomController {
+@RequestMapping("/blacklist")
+public class BlackListController {
 
-	private final ChatRoomService service;
+	private final BlackListService service;
 	
-	@GetMapping("/{roomId}")
-	public ChatRoomDTO getChatRoom(@PathVariable(name = "roomId") Long roomId) {
-		return service.get(roomId);
+	@GetMapping("/{blId}")
+	public BlackListDTO getBlackList(@PathVariable(name = "blId") Long blId) {
+		return service.get(blId);
 	}
 	
 	@PostMapping("/")
-	public Map<String, Long> register(@RequestBody ChatRoomDTO chatRoomDTO) {
-		Long roomId = service.register(chatRoomDTO);
-		return Map.of("roomId", roomId);
+	public Map<String, Long> register(@RequestBody BlackListDTO blackListDTO) {
+		Long blId = service.register(blackListDTO);
+		return Map.of("blId", blId);
 	}
-	
+	/*
 	@GetMapping("/list")
-	public PageResponseDTO<ChatRoomDTO> list(SearchDTO searchDTO) {
-		return service.list(searchDTO);
+	public PageResponseDTO<ChatRoomDTO> list(PageRequestDTO pageRequestDTO) {
+		return service.list(pageRequestDTO);
 	}
 	
 	@PutMapping("/{roomId}")
@@ -56,8 +55,8 @@ public class ChatRoomController {
 		service.remove(roomId);
 		return Map.of("RESULT", "SUCCESS");
 	}
+	 */
 }
 	   
-
 
 

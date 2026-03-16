@@ -12,11 +12,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.honey.domain.ChatRoom;
-import com.honey.domain.Member;
 import com.honey.dto.ChatRoomDTO;
-import com.honey.dto.MemberDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.repository.ChatRoomRepository;
 
 import jakarta.transaction.Transactional;
@@ -51,11 +50,18 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 	}
 
 	@Override
-	public PageResponseDTO<ChatRoomDTO> list(PageRequestDTO pageRequestDTO) {
-		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
-				pageRequestDTO.getSize(), Sort.by("roomId").descending());
+	public PageResponseDTO<ChatRoomDTO> list(SearchDTO searchDTO) {
+		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
+				searchDTO.getSize(), Sort.by("roomId").descending());
 		Page<ChatRoom> result = repository.findAllByEnabled(pageable);
-		
+		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+        	result = repository.searchByCondition(
+					searchDTO.getSearchType(),
+					searchDTO.getKeyword(),
+					pageable);
+        } else {
+        	result = repository.findAllByEnabled(pageable);
+        }
 		List<ChatRoomDTO> dtoList = result.getContent().stream().map(chatRoom -> {
 			ChatRoomDTO dto = modelMapper.map(chatRoom, ChatRoomDTO.class);
 	        return dto;
@@ -64,7 +70,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 	long totalCount = result.getTotalElements();
 
 	PageResponseDTO<ChatRoomDTO> responseDTO = PageResponseDTO.<ChatRoomDTO>withAll().dtoList(dtoList)
-			.pageRequestDTO(pageRequestDTO).totalCount(totalCount).build();
+			.pageRequestDTO(searchDTO).totalCount(totalCount).build();
 
 	return responseDTO;
 	}

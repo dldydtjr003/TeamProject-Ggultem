@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.honey.dto.BusinessBoardDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.service.BusinessBoardService;
 import com.honey.util.CustomFileUtil;
 
@@ -49,8 +50,8 @@ public class BusinessBoardPageController {
 	}
 	
 	@GetMapping("/list")
-	public PageResponseDTO<BusinessBoardDTO> list(PageRequestDTO pageRequestDTO) {
-		return businessBoardService.list(pageRequestDTO);
+	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO) {
+		return businessBoardService.list(searchDTO);
 	}
 	
 	@PutMapping("/modify/{no}")

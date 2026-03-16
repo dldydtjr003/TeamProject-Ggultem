@@ -17,6 +17,7 @@ import com.honey.domain.BusinessBoard;
 import com.honey.dto.BusinessBoardDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.repository.BusinessBoardRepository;
 import com.honey.util.CustomFileUtil;
 
@@ -70,11 +71,19 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 	}
 
 	@Override
-	public PageResponseDTO<BusinessBoardDTO> list(PageRequestDTO pageRequestDTO) {
-		Pageable pageable = PageRequest.of(pageRequestDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
-				pageRequestDTO.getSize(), Sort.by("no").descending());
+	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO) {
+		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
+				searchDTO.getSize(), Sort.by("no").descending());
 		
-		Page<BusinessBoard> result = boardRepository.findAll(pageable);
+		Page<BusinessBoard> result = null; 
+		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+			result = boardRepository.searchByCondition(
+					searchDTO.getSearchType(),
+					searchDTO.getKeyword(),
+					pageable);
+		} else {
+			result = boardRepository.findAll(pageable);
+		}
 		
 		List<BusinessBoardDTO> dtoList = result.getContent().stream().map(businessBoard -> {
 			BusinessBoardDTO dto = modelMapper.map(businessBoard, BusinessBoardDTO.class);
@@ -93,7 +102,7 @@ public class BusinessBoardServiceImpl implements BusinessBoardService {
 		long totalCount = result.getTotalElements();
 		
 		PageResponseDTO<BusinessBoardDTO> responseDTO = PageResponseDTO.<BusinessBoardDTO>withAll().dtoList(dtoList)
-				.pageRequestDTO(pageRequestDTO).totalCount(totalCount).build();
+				.pageRequestDTO(searchDTO).totalCount(totalCount).build();
 		
 		return responseDTO;
 	}

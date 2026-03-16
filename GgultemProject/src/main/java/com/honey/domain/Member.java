@@ -76,10 +76,10 @@ public class Member extends BaseTimeEntity {
 	private List<MemberThumbnail> thumbnailList = new ArrayList<>(); 
 
     public void addRole(String role) {
-    	if(authSet != null && !authSet.isEmpty()) {
-    		this.authSet = new HashSet<>();
-    	}
-        authSet.add(role);
+    	if (this.authSet == null) {
+            this.authSet = new HashSet<>();
+        }
+        this.authSet.add(role);
     }
 	
     public void changeStatus(int newStatus) {
