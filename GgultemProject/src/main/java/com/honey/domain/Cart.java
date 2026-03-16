@@ -1,5 +1,6 @@
 package com.honey.domain;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,23 +18,23 @@ import lombok.ToString;
 @Entity
 @Getter
 @ToString
+@Builder
 @Table(name = "cart")
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @SequenceGenerator(name = "CART_SEQ_GEN", sequenceName = "CART_SEQ", allocationSize = 1, initialValue = 1)
 public class Cart {
 
 	@Id
-	@GeneratedValue(generator = "CART_SEQ_GEN",strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE , generator = "CART_SEQ_GEN")
+	@Column(name = "CART_ID")
 	private Long id;
 	
 	@ManyToOne
-	@JoinColumn(name = "MEMBER_NO")
-	private Member member;
-	
-	@ManyToOne
-	@JoinColumn(name = "ITEM_ID")
+	@JoinColumn(name = "ITEMBOARD_ID") // 실제 DB 테이블의 FK 컬럼명을 지정
 	private ItemBoard itemBoard;
 	
+	@ManyToOne
+	@JoinColumn(name = "MEMBER_NO") // 실제 DB 테이블의 FK 컬럼명을 지정
+	private Member member;
 }

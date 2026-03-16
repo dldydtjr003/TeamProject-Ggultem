@@ -18,8 +18,9 @@ import lombok.NoArgsConstructor;
 public class CartDTO {
 
 	private Long id;
-	private Member member;
+	private Long itemId;
 	private ItemBoard itemBoard;
+	private Member member;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private LocalDateTime regDate;
