@@ -47,5 +47,6 @@ public class BoardReplyController {
 
 		return "SUCCESS";
 	}
+	// 수정확인용 주석
 	
 }
