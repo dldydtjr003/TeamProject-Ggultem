@@ -4,6 +4,7 @@ import com.honey.dto.BusinessBoardDTO;
 import com.honey.dto.MemberDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 
 public interface BusinessBoardService {
 
@@ -11,7 +12,7 @@ public interface BusinessBoardService {
 
 	public BusinessBoardDTO get(Long no);
 
-	public PageResponseDTO<BusinessBoardDTO> list(PageRequestDTO pageRequestDTO);
+	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO);
 
 	public void approve(Long no);
 
