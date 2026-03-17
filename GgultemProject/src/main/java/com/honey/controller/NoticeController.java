@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.honey.dto.NoticeDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.service.NoticeService;
 import com.honey.util.CustomFileUtil;
 
@@ -48,9 +49,9 @@ public class NoticeController {
 	}
 	
 	@GetMapping("/list")
-	public PageResponseDTO<NoticeDTO> list(PageRequestDTO pageRequestDTO){
-		log.info(pageRequestDTO);
-		return service.list(pageRequestDTO);
+	public PageResponseDTO<NoticeDTO> list(SearchDTO searchDTO){
+		log.info(searchDTO);
+		return service.list(searchDTO);
 	}
 	
 	@PutMapping("/{noticeId}")
@@ -72,9 +73,4 @@ public class NoticeController {
 	}
 	
 }
-
-
-
-
-
 
