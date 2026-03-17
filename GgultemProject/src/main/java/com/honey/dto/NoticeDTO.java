@@ -24,6 +24,7 @@ public class NoticeDTO {
     private String title;
     private String content;
     private Integer enabled;
+    private String writer;
     private Long memberNo;
     private Integer viewCount;
 	

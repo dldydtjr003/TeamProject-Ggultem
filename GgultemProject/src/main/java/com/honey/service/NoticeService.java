@@ -1,8 +1,11 @@
 package com.honey.service;
 
+import com.honey.dto.BoardDTO;
 import com.honey.dto.NoticeDTO;
 import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -15,7 +18,7 @@ public interface NoticeService {
     public Long register(NoticeDTO noticeDTO);
 
     // 공지사항 목록 (페이징/검색 처리)
-    public PageResponseDTO<NoticeDTO> list(PageRequestDTO pageRequestDTO);
+    public PageResponseDTO<NoticeDTO> list(SearchDTO searchDTO);
 
     // 공지사항 수정
     public void modify(NoticeDTO noticeDTO);
