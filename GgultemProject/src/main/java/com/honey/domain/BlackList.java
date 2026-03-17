@@ -42,4 +42,40 @@ public class BlackList extends BaseTimeEntity {
 	public void changeEnabled(int enabled) {
 		this.enabled = enabled;
 	}
+	
+	public void changeEndDate(LocalDateTime endDate) {
+		this.endDate = endDate;
+	}
+
+	public void setStartDate(LocalDateTime startDate) {
+		this.startDate = startDate;
+	}
+
+	public void setBlId(Long blId) {
+		this.blId = blId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	public void setAdminId(String adminId) {
+		this.adminId = adminId;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public void setEndDate(LocalDateTime endDate) {
+		this.endDate = endDate;
+	}
+
+	public void setEnabled(Integer enabled) {
+		this.enabled = enabled;
+	}
 }
