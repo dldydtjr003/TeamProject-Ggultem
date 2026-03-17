@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.honey.dto.BlackListDTO;
-import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.service.BlackListService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,25 +37,25 @@ public class BlackListController {
 		Long blId = service.register(blackListDTO);
 		return Map.of("blId", blId);
 	}
-	/*
+	
 	@GetMapping("/list")
-	public PageResponseDTO<ChatRoomDTO> list(PageRequestDTO pageRequestDTO) {
-		return service.list(pageRequestDTO);
+	public PageResponseDTO<BlackListDTO> list(SearchDTO searchDTO) {
+		return service.list(searchDTO);
 	}
 	
 	@PutMapping("/{roomId}")
-	public Map<String, String> modify(@PathVariable(name = "roomId") Long roomId, @RequestBody ChatRoomDTO chatRoomDTO) {
-		chatRoomDTO.setRoomId(roomId);
-		service.modify(chatRoomDTO);
+	public Map<String, String> modify(@PathVariable(name = "blId") Long blId, @RequestBody BlackListDTO blackListDTO) {
+		blackListDTO.setBlId(blId);
+		service.modify(blackListDTO);
 		return Map.of("RESULT", "SUCCESS");
 	}
 	
-	@DeleteMapping("/remove/{roomId}")
-	public Map<String, String> remove(@PathVariable(name = "roomId") Long roomId) {
-		service.remove(roomId);
+	@DeleteMapping("/remove/{blId}")
+	public Map<String, String> remove(@PathVariable(name = "blId") Long blId) {
+		service.remove(blId);
 		return Map.of("RESULT", "SUCCESS");
 	}
-	 */
+	
 }
 	   
 
