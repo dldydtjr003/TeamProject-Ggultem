@@ -13,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 public class ReportDTO {
     private Long reportId;
-    private Long memberNo;
+    private String memberEmail;
     private String targetMemberId;
     private String reportType;
     private String targetType; // 0, 1, 2, 3 등

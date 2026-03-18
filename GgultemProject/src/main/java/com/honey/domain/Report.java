@@ -38,7 +38,7 @@ public class Report extends BaseTimeEntity {
     private Long reportId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MEMBER_NO", nullable = false)
+    @JoinColumn(name = "MEMBER_EMAIL", nullable = false)
     private Member reporter; // 신고자
 
     @Column(name = "TARGET_MEMBER_ID", nullable = false)
@@ -66,7 +66,7 @@ public class Report extends BaseTimeEntity {
 
     @Builder.Default
     @Column(nullable = false)
-    private Integer status = 0; // 0: 접수, 1: 처리중, 2: 처리완료
+    private Integer status = 0; // 0: 접수, 1: 처리완료
 
     // 신고된 게시글이나 댓글의 번호
     @Column(name = "TARGET_NO")

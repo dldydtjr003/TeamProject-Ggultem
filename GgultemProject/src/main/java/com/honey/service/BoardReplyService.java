@@ -4,8 +4,11 @@ import java.util.List;
 
 import com.honey.dto.BoardReplyDTO;
 
-
 public interface BoardReplyService {
+
+    ///////////////////
+    /// 멤버전용
+    //////////////////
 
     // 댓글 등록
     Long register(BoardReplyDTO boardReplyDTO);
@@ -13,12 +16,19 @@ public interface BoardReplyService {
     // 댓글 목록
     List<BoardReplyDTO> list(Integer boardNo);
 
-	// 댓글 수정
-	void modify(BoardReplyDTO boardReplyDTO);
+    // 댓글 수정
+    void modify(BoardReplyDTO boardReplyDTO);
 
     // 댓글 삭제
     void remove(Long no);
 
+    ///////////////////
+    /// 관리자 전용
+    //////////////////
 
-    
+
+    // 댓글 목록
+    List<BoardReplyDTO> adminList(Integer boardNo);
+    // 강제 삭제 
+    void adminRemove(Long replyNo);
 }

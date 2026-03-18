@@ -10,5 +10,8 @@ public interface BoardReplyRepository extends JpaRepository<BoardReply, Long> {
 
     List<BoardReply> findByBoardBoardNoAndEnabled(Integer boardNo, Integer enabled);
 
+	List<BoardReply> findByBoardBoardNo(Integer boardNo);
+
     
+	
 }
