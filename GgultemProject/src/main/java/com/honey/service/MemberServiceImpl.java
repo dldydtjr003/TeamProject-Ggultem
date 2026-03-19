@@ -1,10 +1,12 @@
 package com.honey.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,26 @@ public class MemberServiceImpl implements MemberService {
 	private final SearchLogService searchLogSearvice;
 	private final CustomFileUtil fileUtil;
 	private final PasswordEncoder passwordEncoder; // 주입 필요
+	
+	// application.properties에 설정한 키값을 매핑합니다.
+    @Value("${com.honey.google.client.id}")
+    private String googleClientId;
+
+    @Value("${com.honey.google.client.secret}")
+    private String googleClientSecret;
+
+    @Value("${com.honey.google.redirect.uri}")
+    private String googleRedirectUri;
+    
+    // application.properties에 설정한 키값을 매핑합니다.
+    @Value("${com.honey.kakao.client.id}")
+    private String kakaoClientId;
+    
+    @Value("${com.honey.kakao.client.secret}")
+    private String kakaoClientSecret;
+    
+    @Value("${com.honey.kakao.redirect.uri}")
+    private String kakaoRedirectUri;
 
 	@Override
 	public MemberDTO get(String email) {
@@ -83,13 +106,14 @@ public class MemberServiceImpl implements MemberService {
 	public void modify(MemberDTO memberDTO) {
 		Member member = memberRepository.findById(memberDTO.getEmail()).orElseThrow();
 
-		// 1. 비밀번호: 넘어온 값이 있을 때만 수정 (암호화는 필수!)
-	    if (memberDTO.getPw() != null && !memberDTO.getPw().isEmpty()) {
-	        // 비밀번호를 수정할 경우 반드시 암호화해서 넣어야 로그인이 됩니다.
-	        member.changePw(passwordEncoder.encode(memberDTO.getPw())); 
-	        log.info("비밀번호 변경됨");
+		String rawPw = memberDTO.getPw();
+	    
+	    // 만약 프론트에서 비번을 안 보냈거나 빈 문자열이라면 기존 비번 유지
+	    // 비번이 있을 때만 새로 암호화해서 변경
+	    if (rawPw != null && !rawPw.isEmpty()) {
+	        member.changePw(passwordEncoder.encode(rawPw));
 	    } else {
-	        log.info("비밀번호 변경 안 함 (기존 유지)");
+	        log.info("비밀번호 변경 없이 기존 정보를 유지합니다.");
 	    }
 		member.changePhone(memberDTO.getPhone());
 		member.changeNickName(memberDTO.getNickname());
@@ -234,9 +258,9 @@ public class MemberServiceImpl implements MemberService {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", "926c20ad6655d0951df3feb3788f0d99"); 
-        params.add("redirect_uri", "http://localhost:5173/member/kakao");
-        params.add("client_secret", "xWuBwDKdzO6WVAXKhgWzrnJS0yEw4E7w");
+        params.add("client_id", kakaoClientId); 
+        params.add("redirect_uri", kakaoRedirectUri);
+        params.add("client_secret", kakaoClientSecret);
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(params, headers);
@@ -335,6 +359,120 @@ public class MemberServiceImpl implements MemberService {
         );
         
         return response.getBody(); // 여기서 비로소 닉네임과 ID가 든 JSON이 나옵니다!
+    }
+    
+    /*  구글 연동   */
+    
+    @Override
+    public MemberDTO getMemberWithGoogle(String authCode) {
+    	String accessToken = getGoogleAccessToken(authCode);
+    	
+        // 1. 액세스 토큰을 이용해 구글 사용자 정보 가져오기
+        String email = getGoogleEmail(accessToken);
+        log.info("구글 이메일: " + email);
+
+        // 2. 기존 회원이면 로그인, 없으면 자동 가입 (카카오와 동일)
+        Optional<Member> result = memberRepository.findById("google_" + email);
+
+        if (result.isPresent()) {
+            return entityToDTO(result.get());
+        }
+
+        // 3. 신규 회원일 경우 (비밀번호는 임의 생성)
+        Member socialMember = makeSocialMember("google_" + email);
+        memberRepository.save(socialMember);
+
+        return entityToDTO(socialMember);
+    }
+
+    private String getGoogleAccessToken(String authCode) {
+    	String googleTokenUrl = "https://oauth2.googleapis.com/token";
+        
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 1. 헤더 설정 (Form 데이터 형식)
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 2. 파라미터 설정 (본인의 구글 콘솔 정보와 일치해야 함)
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("code", authCode);
+        params.add("client_id", googleClientId);
+        params.add("client_secret", googleClientSecret);
+        params.add("redirect_uri", googleRedirectUri); // 리액트 리다이렉트 경로
+        params.add("grant_type", "authorization_code");
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        try {
+            // 3. 구글 토큰 서버에 POST 요청
+            ResponseEntity<Map> response = restTemplate.postForEntity(googleTokenUrl, request, Map.class);
+            
+            log.info("구글 토큰 응답 전체: " + response.getBody());
+
+            // 4. 응답 본문에서 access_token 추출
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody != null && responseBody.containsKey("access_token")) {
+                return (String) responseBody.get("access_token");
+            }
+        } catch (Exception e) {
+            log.error("구글 액세스 토큰 교환 실패: " + e.getMessage());
+            throw new RuntimeException("Google Access Token 교환 중 오류 발생");
+        }
+        
+        return null;
+	}
+
+	// 구글 API 호출 전용 private 메서드
+    private String getGoogleEmail(String accessToken) {
+    	// 로그를 찍어서 토큰이 제대로 넘어오는지 확인하세요!
+        log.info("구글 API 요청 시 사용하는 토큰: " + accessToken);
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new RuntimeException("구글 액세스 토큰이 비어있습니다.");
+        }
+
+        String googleUserInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo";
+        
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        
+        // ⚠️ 중요: "Bearer " 다음에 반드시 한 칸 띄워야 합니다!
+        headers.add("Authorization", "Bearer " + accessToken);
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                googleUserInfoUrl, 
+                HttpMethod.GET, 
+                entity, 
+                Map.class
+            );
+            log.info("구글 응답 성공: " + response.getBody());
+            return (String) response.getBody().get("email");
+        } catch (Exception e) {
+            log.error("구글 사용자 정보 가져오기 실패: " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    private Member makeSocialMember(String email) {
+        // 꿀템 프로젝트의 Member 엔티티 구조에 맞게 수정하세요.
+        // 예: 닉네임은 이메일 앞부분으로, 비밀번호는 암호화된 랜덤값으로 설정
+        String tempPassword = passwordEncoder.encode("1111"); // 기본 비번 설정
+
+        Member member = Member.builder()
+                .email(email)
+                .pw(tempPassword)
+                .nickname("Google_" + email.split("@")[0]) // 닉네임 자동 생성
+                .social(true) // 소셜 가입 여부 플래그
+                .build();
+
+        // 회원 권한 추가 (예: USER 권한)
+        member.addRole(MemberRole.USER);
+
+        return member;
     }
 	
 }
