@@ -1,5 +1,7 @@
 package com.honey.domain;
 
+import java.time.LocalDateTime;
+
 import com.honey.common.BaseTimeEntity;
 
 import jakarta.persistence.Entity;
@@ -16,7 +18,6 @@ import lombok.ToString;
 
 @Entity
 @Table(name = "codegroup")
-@SequenceGenerator(name = "CODEGROUP_SEQ_GEN", sequenceName = "CODEGROUP_SEQ", initialValue = 1, allocationSize = 1)
 @Getter
 @ToString
 @AllArgsConstructor
@@ -24,21 +25,34 @@ import lombok.ToString;
 @Builder
 public class CodeGroup extends BaseTimeEntity {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "CODEGROUP_SEQ_GEN")
-	private Long groupCode;
+	private String groupCode;
 	private String groupName;
 	private String useYn;
 	private Integer enabled;
+	
+	private LocalDateTime dtdDate; // 삭제일
+	
+	
 
-	public void changeEnabled(int enabled) {
-		this.enabled = enabled;
+	public void changeStatus(int newStatus) {
+		this.enabled = newStatus;
+		LocalDateTime now = LocalDateTime.now(); // 변수로 고정
+
+		switch (newStatus) {
+		case 0: // 삭제
+			this.dtdDate = now;
+			break;
+		case 1: // 활성화 (정지 해제)
+			this.dtdDate = null;
+			break;
+		}
 	}
 
 	public void changeGroupName(String groupName) {
 		this.groupName = groupName;
 	}
 
-	public void setGroupCode(Long groupCode) {
+	public void setGroupCode(String groupCode) {
 		this.groupCode = groupCode;
 	}
 
@@ -48,10 +62,6 @@ public class CodeGroup extends BaseTimeEntity {
 
 	public void setUseYn(String useYn) {
 		this.useYn = useYn;
-	}
-
-	public void setEnabled(Integer enabled) {
-		this.enabled = enabled;
 	}
 
 }

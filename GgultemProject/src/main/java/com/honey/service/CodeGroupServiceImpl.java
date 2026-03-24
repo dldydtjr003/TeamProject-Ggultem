@@ -30,7 +30,7 @@ public class CodeGroupServiceImpl implements CodeGroupService {
 	private final CodeGroupRepository repository;
 
 	@Override
-	public CodeGroupDTO get(Long groupCode) {
+	public CodeGroupDTO get(String groupCode) {
 		Optional<CodeGroup> result = repository.findById(groupCode);
 		CodeGroup codeGroup = result.orElseThrow();
 		
@@ -40,7 +40,7 @@ public class CodeGroupServiceImpl implements CodeGroupService {
 	}
 	
 	@Override
-	public Long register(CodeGroupDTO codeGroupDTO) {
+	public String register(CodeGroupDTO codeGroupDTO) {
 	    // ModelMapper 대신 Builder 패턴을 사용하여 명확하게 객체를 생성합니다.
 	    // 이렇게 하면 매핑 충돌 에러가 발생하지 않습니다.
 		CodeGroup codeGroup = CodeGroup.builder()
@@ -59,7 +59,17 @@ public class CodeGroupServiceImpl implements CodeGroupService {
 	public PageResponseDTO<CodeGroupDTO> list(SearchDTO searchDTO) {
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, // 1 페이지가 0 이므로 주의
 				searchDTO.getSize(), Sort.by("groupCode").descending());
-		Page<CodeGroup> result = repository.findAllByEnabled(pageable);
+		
+		Page<CodeGroup> result = null;
+		if(searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+			//searchLogSearvice.logSearch(searchDTO);
+			result = repository.searchByCondition(
+					searchDTO.getSearchType(),
+					searchDTO.getKeyword(),
+					pageable);
+		} else {
+			result = repository.findAllByEnabled(pageable);
+		}
 		
 		List<CodeGroupDTO> dtoList = result.getContent().stream().map(codeGroup -> {
 			CodeGroupDTO dto = modelMapper.map(codeGroup, CodeGroupDTO.class);
@@ -80,16 +90,17 @@ public class CodeGroupServiceImpl implements CodeGroupService {
 		CodeGroup codeGroup = result.orElseThrow();
 
 		codeGroup.changeGroupName(codeGroupDTO.getGroupName());
+		codeGroup.setUseYn(codeGroupDTO.getUseYn());
 
 	    repository.save(codeGroup);
 	}
 	
 	@Override
-	public void remove(Long groupCode) {
+	public void remove(String groupCode) {
 		Optional<CodeGroup> result = repository.findById(groupCode);
 		CodeGroup codeGroup = result.orElseThrow();
 		
-		codeGroup.changeEnabled(0);
+		codeGroup.changeStatus(0);
 
 		repository.save(codeGroup);
 	}

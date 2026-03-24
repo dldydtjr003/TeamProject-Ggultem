@@ -28,8 +28,9 @@ public class CodeDetailController {
 	private final CodeDetailService service;
 	
 	@GetMapping("/{groupCode}")
-	public CodeDetailDTO getCodeDetail(@PathVariable(name = "groupCode") String groupCode) {
-		return service.get(groupCode);
+	public CodeDetailDTO getCodeDetail(@PathVariable(name = "groupCode") String groupCode,
+			@PathVariable(name = "codeValue") String codeValue) {
+		return service.get(groupCode, codeValue);
 	}
 	
 	@PostMapping("/")
@@ -38,9 +39,9 @@ public class CodeDetailController {
 		return Map.of("groupCode", groupCode);
 	}
 	
-	@GetMapping("/list")
-	public PageResponseDTO<CodeDetailDTO> list(SearchDTO searchDTO) {
-		return service.list(searchDTO);
+	@GetMapping("/list/{groupCode}")
+	public PageResponseDTO<CodeDetailDTO> list(@PathVariable(name = "groupCode") String groupCode, SearchDTO searchDTO) {
+		return service.list(groupCode, searchDTO);
 	}
 	
 	@PutMapping("/{groupCode}")
@@ -51,8 +52,9 @@ public class CodeDetailController {
 	}
 	
 	@DeleteMapping("/remove/{groupCode}")
-	public Map<String, String> remove(@PathVariable(name = "groupCode") String groupCode) {
-		service.remove(groupCode);
+	public Map<String, String> remove(@PathVariable(name = "groupCode") String groupCode,
+			@PathVariable(name = "codeValue") String codeValue) {
+		service.remove(groupCode, codeValue);
 		return Map.of("RESULT", "SUCCESS");
 	}
 	
