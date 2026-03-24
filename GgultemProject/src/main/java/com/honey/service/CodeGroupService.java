@@ -6,15 +6,15 @@ import com.honey.dto.SearchDTO;
 
 public interface CodeGroupService {
 
-	CodeGroupDTO get(Long groupCode);
+	CodeGroupDTO get(String groupCode);
 
-	Long register(CodeGroupDTO codeGroupDTO);
+	String register(CodeGroupDTO codeGroupDTO);
 
 	PageResponseDTO<CodeGroupDTO> list(SearchDTO searchDTO);
 
 	void modify(CodeGroupDTO codeGroupDTO);
 
-	void remove(Long groupCode);
+	void remove(String groupCode);
 
 	
 

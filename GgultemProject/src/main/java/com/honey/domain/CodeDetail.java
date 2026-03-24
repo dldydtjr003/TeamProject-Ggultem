@@ -3,10 +3,8 @@ package com.honey.domain;
 import com.honey.common.BaseTimeEntity;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,16 +13,20 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "codeDetail")
+@Table(name = "CODE_DETAIL")
 @Getter
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@IdClass(CodeDetailId.class)
 public class CodeDetail extends BaseTimeEntity {
+	
 	@Id
 	private String groupCode;
+	@Id
 	private String codeValue;
+	
 	private String codeName;
 	private Integer sortSeq;
 	private String useYn;
