@@ -81,7 +81,7 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 	            .itemUrl(itemBoardDTO.getItemUrl())
 	            .member(member) 
 	            .pictureUrl(itemBoardDTO.getPictureUrl())
-	            .enabled(0)
+	            .enabled(1)
 	            .status("false") 
 	            .build();
 	    
@@ -188,7 +188,7 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 		Optional<ItemBoard> result = itemBoardRepository.findById(id);
 		ItemBoard itemBoard = result.orElseThrow();
 
-		itemBoard.changeEnabled(1);
+		itemBoard.changeEnabled(0);
 
 		itemBoardRepository.save(itemBoard);
 	}

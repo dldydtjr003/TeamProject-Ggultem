@@ -13,7 +13,7 @@ import com.honey.domain.ItemBoard;
 
 public interface ItemBoardRepository extends JpaRepository<ItemBoard, Long> {
 
-	@Query("select i from ItemBoard i where enabled = 0")
+	@Query("select i from ItemBoard i where enabled = 1")
 	Page<ItemBoard> findAllList(Pageable pageable);
 
 	@EntityGraph(attributePaths = { "itemList" })
@@ -33,7 +33,7 @@ public interface ItemBoardRepository extends JpaRepository<ItemBoard, Long> {
 	@EntityGraph(attributePaths = { "itemList" })
 	@Query("""
 			SELECT i FROM ItemBoard i
-			WHERE i.enabled = 0
+			WHERE i.enabled = 1
 
 			AND (:status = 'all' OR i.status = :status)
 			AND (:category = 'all' OR i.category = :category)
