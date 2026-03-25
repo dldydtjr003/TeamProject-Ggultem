@@ -32,21 +32,19 @@ public class BoardReplyController {
 	@PutMapping("/{replyNo}")
 	public String modify(@PathVariable Long replyNo, @RequestBody BoardReplyDTO dto) {
 
-		dto.setReplyNo(replyNo);
+	    dto.setReplyNo(replyNo);
+	    service.modify(dto);
 
-		service.modify(dto);
-
-		return "SUCCESS";
+	    return "SUCCESS";
 	}
 
 	// 댓글 삭제 
-	@GetMapping("/{replyNo}")
+	@PutMapping("/{replyNo}/delete")
 	public String remove(@PathVariable Long replyNo) {
 
-		service.remove(replyNo);
+	    service.remove(replyNo);
 
-		return "SUCCESS";
+	    return "SUCCESS";
 	}
-	// 수정확인용 주석
 	
 }
