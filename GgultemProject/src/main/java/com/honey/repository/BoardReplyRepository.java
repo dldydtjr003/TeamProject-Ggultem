@@ -12,17 +12,17 @@ import com.honey.domain.BoardReply;
 
 public interface BoardReplyRepository extends JpaRepository<BoardReply, Long> {
 
+    // 게시글 댓글 조회
+    List<BoardReply> findByBoardBoardNo(Integer boardNo);
+
     List<BoardReply> findByBoardBoardNoAndEnabled(Integer boardNo, Integer enabled);
 
-	List<BoardReply> findByBoardBoardNo(Integer boardNo);
-
-	// 활성/삭제 필터
-	Page<BoardReply> findByEnabled(Integer enabled, Pageable pageable);
-
-
-	// 검색
-	@Query("select r from BoardReply r where r.content like %:keyword%")
-	Page<BoardReply> searchReply(@Param("keyword") String keyword, Pageable pageable);
-	
-	
+    //  검색 + 상태 + 전체 통합
+    @Query("select r from BoardReply r where " +
+           "(:enabled is null or r.enabled = :enabled) and " +
+           "(:keyword is null or r.content like %:keyword%)")
+    Page<BoardReply> searchAll(
+            @Param("enabled") Integer enabled,
+            @Param("keyword") String keyword,
+            Pageable pageable);
 }

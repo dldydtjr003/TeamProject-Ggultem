@@ -11,236 +11,227 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.honey.domain.Board;
-import com.honey.domain.BoardReply;
 import com.honey.domain.Member;
 import com.honey.dto.BoardDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
-import com.honey.repository.BoardReplyRepository;
 import com.honey.repository.BoardRepository;
 import com.honey.repository.MemberRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Transactional // 서비스 전체 트랜잭션 처리
-@Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class BoardServiceImpl implements BoardService {
 
-	private final ModelMapper modelMapper;
-	private final BoardRepository boardRepository;
-	private final MemberRepository memberRepository;
-	private final BoardReplyRepository boardReplyRepository;
+    // Entity ↔ DTO 변환용
+    private final ModelMapper modelMapper;
 
-	// =========================
-	// 게시글 등록
-	// =========================
-	@Override
-	public Integer register(BoardDTO boardDTO) {
+    // 게시글 Repository
+    private final BoardRepository boardRepository;
 
-		// 이메일로 회원 조회 (작성자 정보)
-		Member member = memberRepository.findById(boardDTO.getEmail()).orElseThrow();
+    // 회원 Repository (작성자 조회용)
+    private final MemberRepository memberRepository;
 
-		// 게시글 엔티티 생성
-		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname())
-				.content(boardDTO.getContent()).viewCount(0) // 조회수 초기값
-				.enabled(1) // 활성 상태 (1: 활성, 0: 삭제)
-				.member(member).build();
+    // =========================
+    // 게시글 등록
+    // =========================
+    @Override
+    public Integer register(BoardDTO boardDTO) {
 
-		// DB 저장 후 PK 반환
-		return boardRepository.save(board).getBoardNo();
-	}
+        // 이메일로 회원 조회 (작성자)
+        Member member = memberRepository.findById(boardDTO.getEmail())
+                .orElseThrow(() -> new RuntimeException("회원 없음"));
 
-	// =========================
-	// 게시글 조회
-	// =========================
-	@Override
-	public BoardDTO get(Integer boardNo) {
+        // 게시글 엔티티 생성
+        Board board = Board.builder()
+                .title(boardDTO.getTitle())
+                .writer(member.getNickname()) // 닉네임 저장
+                .content(boardDTO.getContent()) // 에디터 HTML 그대로 저장
+                .viewCount(0) // 조회수 초기값
+                .enabled(1) // 1: 활성, 0: 삭제
+                .member(member)
+                .build();
 
-		// 게시글 조회
-		Board board = boardRepository.findById(boardNo).orElseThrow();
+        // 저장 후 PK 반환
+        return boardRepository.save(board).getBoardNo();
+    }
 
-		// 조회수 증가
-		board.changeViewCount(board.getViewCount() + 1);
+    // =========================
+    // 게시글 조회
+    // =========================
+    @Override
+    public BoardDTO get(Integer boardNo) {
 
-		// Entity → DTO 변환
-		BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        // 게시글 조회
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-		// 이미지 파일명 리스트 추출
-		List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+        // 조회수 증가
+        board.changeViewCount(board.getViewCount() + 1);
 
-		boardDTO.setUploadFileNames(fileNames);
+        // Entity → DTO 변환
+        BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-		return boardDTO;
-	}
+        // 이미지 파일 리스트 추출
+        List<String> fileNames = board.getBoardImage()
+                .stream()
+                .map(img -> img.getFileName())
+                .toList();
 
-	// =========================
-	// 게시글 수정
-	// =========================
-	@Override
-	public void modify(BoardDTO boardDTO) {
+        dto.setUploadFileNames(fileNames);
 
-		// 수정할 게시글 조회
-		Board board = boardRepository.findById(boardDTO.getBoardNo()).orElseThrow();
+        return dto;
+    }
 
-		// 제목 수정 (null 방어)
-		if (boardDTO.getTitle() != null && !boardDTO.getTitle().isEmpty()) {
-			board.changeTitle(boardDTO.getTitle());
-		}
+    // =========================
+    // 게시글 수정
+    // =========================
+    @Override
+    public void modify(BoardDTO boardDTO) {
 
-		// 내용 수정
-		if (boardDTO.getContent() != null && !boardDTO.getContent().isEmpty()) {
-			board.setContent(boardDTO.getContent());
-		}
+        // 수정 대상 조회
+        Board board = boardRepository.findById(boardDTO.getBoardNo())
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-		// 변경된 엔티티 저장
-		boardRepository.save(board);
-	}
+        // 제목 수정 (null / 빈값 방어)
+        if (boardDTO.getTitle() != null && !boardDTO.getTitle().isEmpty()) {
+            board.changeTitle(boardDTO.getTitle());
+        }
 
-	// =========================
-	// 게시글 삭제 (논리삭제)
-	// =========================
-	@Override
-	public void remove(Integer boardNo) {
+        // 내용 수정
+        if (boardDTO.getContent() != null && !boardDTO.getContent().isEmpty()) {
+            board.setContent(boardDTO.getContent());
+        }
+    }
 
-		// 게시글 조회
-		Board board = boardRepository.findById(boardNo).orElseThrow();
+    // =========================
+    // 게시글 삭제 (논리삭제)
+    // =========================
+    @Override
+    public void remove(Integer boardNo) {
 
-		// enabled = 0 → 삭제 처리 (DB에서 실제 삭제 X)
-		board.changeEnabled(0);
+        // 게시글 조회
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-		boardRepository.save(board);
-	}
+        // enabled = 0 → 삭제 처리
+        board.changeEnabled(0);
+    }
 
-	// =========================
-	// 게시글 목록 (일반 사용자)
-	// =========================
-	@Override
-	public PageResponseDTO<BoardDTO> list(SearchDTO searchDTO) {
+    // =========================
+    // 게시글 목록 (일반 사용자)
+    // =========================
+    @Override
+    public PageResponseDTO<BoardDTO> list(SearchDTO searchDTO) {
 
-		// 페이징 설정
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
-				Sort.by("boardNo").descending());
+        // 페이징 설정
+        Pageable pageable = PageRequest.of(
+                searchDTO.getPage() - 1,
+                searchDTO.getSize(),
+                Sort.by("boardNo").descending()
+        );
 
-		Page<Board> result;
+        Page<Board> result;
 
-		// 검색 조건 존재 시
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+        // 🔥 검색 조건 있을 때
+        if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
 
-			result = boardRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
+            result = boardRepository.searchByCondition(
+                    searchDTO.getSearchType(),
+                    searchDTO.getKeyword(),
+                    pageable
+            );
 
-		} else {
-			// 일반 사용자 → 활성 게시글만 조회
-			result = boardRepository.findAllActive(pageable);
-		}
+        } else {
+            // 🔥 일반 사용자 → 삭제 안된 게시글만
+            result = boardRepository.findAllActive(pageable);
+        }
 
-		// Entity → DTO 변환
-		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
+        // Entity → DTO 변환
+        List<BoardDTO> dtoList = result.getContent().stream()
+                .map(board -> {
 
-			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
+                    BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+                    List<String> fileNames = board.getBoardImage()
+                            .stream()
+                            .map(img -> img.getFileName())
+                            .toList();
 
-			dto.setUploadFileNames(fileNames);
+                    dto.setUploadFileNames(fileNames);
 
-			return dto;
+                    return dto;
+                })
+                .collect(Collectors.toList());
 
-		}).collect(Collectors.toList());
+        // 페이징 DTO 반환
+        return PageResponseDTO.<BoardDTO>withAll()
+                .dtoList(dtoList)
+                .pageRequestDTO(searchDTO)
+                .totalCount(result.getTotalElements())
+                .build();
+    }
 
-		// 페이징 DTO 반환
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
-	}
+    // =========================
+    // 관리자 게시글 목록
+    // =========================
+    @Override
+    public PageResponseDTO<BoardDTO> adminList(SearchDTO searchDTO) {
 
-	// =========================
-	// 관리자 게시글 목록
-	// =========================
-	@Override
-	public PageResponseDTO<BoardDTO> adminList(SearchDTO searchDTO) {
+        Pageable pageable = PageRequest.of(
+                searchDTO.getPage() - 1,
+                searchDTO.getSize(),
+                Sort.by("boardNo").descending()
+        );
 
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
-				Sort.by("boardNo").descending());
+        String keyword = searchDTO.getKeyword();
+        Integer enabled = searchDTO.getEnabled();
 
-		Page<Board> result;
+        // 🔥 빈값 방어
+        if (keyword != null && keyword.trim().isEmpty()) {
+            keyword = null;
+        }
 
-		// 관리자 검색 (삭제 포함)
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+        // 🔥 통합 검색 (핵심)
+        Page<Board> result =
+                boardRepository.searchAllAdmin(enabled, keyword, pageable);
 
-			result = boardRepository.searchByConditionAdmin(searchDTO.getSearchType(), searchDTO.getKeyword(),
-					pageable);
+        List<BoardDTO> dtoList = result.getContent().stream()
+                .map(board -> {
 
-		} else {
-			// 관리자 → 전체 조회 (삭제 포함)
-			result = boardRepository.findAll(pageable);
-		}
+                    BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
+                    List<String> fileNames = board.getBoardImage()
+                            .stream()
+                            .map(img -> img.getFileName())
+                            .toList();
 
-			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
+                    dto.setUploadFileNames(fileNames);
 
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
+                    return dto;
+                })
+                .toList();
 
-			dto.setUploadFileNames(fileNames);
+        return PageResponseDTO.<BoardDTO>withAll()
+                .dtoList(dtoList)
+                .pageRequestDTO(searchDTO)
+                .totalCount(result.getTotalElements())
+                .build();
+    }
+    // =========================
+    // 관리자 게시글 삭제
+    // =========================
+    @Override
+    public void adminRemove(Integer boardNo) {
 
-			return dto;
+        // 게시글 조회
+        Board board = boardRepository.findById(boardNo)
+                .orElseThrow(() -> new RuntimeException("게시글 없음"));
 
-		}).toList();
-
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
-	}
-
-	// =========================
-	// 관리자 게시글 삭제 (권한 무시)
-	// =========================
-	@Override
-	public void adminRemove(Integer boardNo) {
-
-		Board board = boardRepository.findById(boardNo).orElseThrow(() -> new RuntimeException("게시글 없음"));
-
-		// 관리자 → 바로 삭제 처리 (작성자 검증 없음)
-		board.changeEnabled(0);
-	}
-
-	// =========================
-	// 관리자 댓글 삭제
-	// =========================
-	@Override
-	public void removeReply(Long replyNo) {
-
-		BoardReply reply = boardReplyRepository.findById(replyNo).orElseThrow(() -> new RuntimeException("댓글 없음"));
-
-		// 댓글 논리 삭제
-		reply.changeEnabled(0);
-	}
-
-	@Override
-	public PageResponseDTO<BoardReply> adminReplyList(SearchDTO searchDTO) {
-
-		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize(),
-				Sort.by("replyNo").descending());
-
-		Page<BoardReply> result;
-
-		// 🔥 1. keyword 검색
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().trim().isEmpty()) {
-
-			result = boardReplyRepository.searchReply(searchDTO.getKeyword(), pageable);
-
-			// 🔥 2. 활성/삭제 필터
-		} else if (searchDTO.getEnabled() != null && !searchDTO.getEnabled().isEmpty()) {
-
-			result = boardReplyRepository.findByEnabled(Integer.parseInt(searchDTO.getEnabled()), pageable);
-
-			// 🔥 3. 전체 조회
-		} else {
-			result = boardReplyRepository.findAll(pageable);
-		}
-
-		return PageResponseDTO.<BoardReply>withAll().dtoList(result.getContent()).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
-	}
+        // 관리자 삭제 → 바로 비활성화
+        board.changeEnabled(0);
+    }
 }

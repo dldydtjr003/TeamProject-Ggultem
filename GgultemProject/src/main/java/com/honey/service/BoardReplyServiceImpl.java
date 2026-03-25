@@ -1,21 +1,22 @@
 package com.honey.service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.honey.domain.Board;
 import com.honey.domain.BoardReply;
 import com.honey.domain.Member;
 import com.honey.dto.BoardReplyDTO;
+import com.honey.dto.PageResponseDTO;
+import com.honey.dto.SearchDTO;
 import com.honey.repository.BoardReplyRepository;
-import com.honey.repository.BoardRepository;
-import com.honey.repository.MemberRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -23,134 +24,126 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class BoardReplyServiceImpl implements BoardReplyService {
 
-	private final BoardReplyRepository boardReplyRepository;
-	private final BoardRepository boardRepository;
-	private final MemberRepository memberRepository;
+    private final BoardReplyRepository boardReplyRepository;
 
-	///////////////////
-	/// 멤버전용
-	//////////////////
+    ///////////////////
+    /// 댓글 등록
+    ///////////////////
+    @Override
+    public Long register(BoardReplyDTO dto) {
 
-	// 댓글 등록
-	@Override
-	public Long register(BoardReplyDTO dto) {
+        Board board = Board.builder()
+                .boardNo(dto.getBoardNo())
+                .build();
 
-		Board board = boardRepository.findById(dto.getBoardNo()).orElseThrow();
+        Member member = Member.builder()
+                .email(dto.getEmail())
+                .build();
 
-		Member member = memberRepository.findById(dto.getEmail()).orElseThrow();
+        BoardReply reply = BoardReply.builder()
+                .board(board)
+                .member(member)
+                .content(dto.getContent())
+                .enabled(1)
+                .build();
 
-		// 부모 댓글 (null값 찾는거방지)
-		BoardReply parentReply = null;
+        return boardReplyRepository.save(reply).getReplyNo();
+    }
 
-		if (dto.getParentReplyNo() != null) {
-			parentReply = boardReplyRepository.findById(dto.getParentReplyNo()).orElseThrow();
-		}
+    ///////////////////
+    /// 댓글 목록
+    ///////////////////
+    @Override
+    public List<BoardReplyDTO> list(Integer boardNo) {
 
-		BoardReply reply = BoardReply.builder().board(board).member(member).content(dto.getContent())
-				.parent(parentReply).enabled(1).build();
+        return boardReplyRepository.findByBoardBoardNo(boardNo).stream()
+                .map(reply -> BoardReplyDTO.builder()
+                        .replyNo(reply.getReplyNo())
+                        .boardNo(reply.getBoard().getBoardNo())
+                        .email(reply.getMember().getEmail())
+                        .content(reply.getContent())
+                        .enabled(reply.getEnabled())
+                        .build())
+                .toList();
+    }
 
-		boardReplyRepository.save(reply);
+    ///////////////////
+    /// 댓글 수정
+    ///////////////////
+    @Override
+    public void modify(BoardReplyDTO dto) {
 
-		return reply.getReplyNo();
-	}
+        BoardReply reply = boardReplyRepository.findById(dto.getReplyNo())
+                .orElseThrow(() -> new RuntimeException("댓글 없음"));
 
-	// 댓글 목록
-	@Override
-	@Transactional(readOnly = true)
-	public List<BoardReplyDTO> list(Integer boardNo) {
+        // Entity 방식대로 수정
+        if (dto.getContent() != null && !dto.getContent().isEmpty()) {
+            reply.changeContent(dto.getContent());
+        }
+    }
 
-		List<BoardReply> replyList = boardReplyRepository.findByBoardBoardNoAndEnabled(boardNo, 1);
+    ///////////////////
+    /// 댓글 삭제 (일반)
+    ///////////////////
+    @Override
+    public void remove(Long replyNo) {
 
-		// DTO 변환 + Map 생성
-		Map<Long, BoardReplyDTO> dtoMap = replyList.stream()
-				.map(reply -> BoardReplyDTO.builder().replyNo(reply.getReplyNo()).boardNo(reply.getBoard().getBoardNo())
-						.email(reply.getMember().getEmail()).content(reply.getContent())
-						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null)
-						.enabled(reply.getEnabled()).regDate(reply.getRegDate()).updDate(reply.getUpdDate()).build())
-				.collect(Collectors.toMap(BoardReplyDTO::getReplyNo, dto -> dto));
+        BoardReply reply = boardReplyRepository.findById(replyNo)
+                .orElseThrow(() -> new RuntimeException("댓글 없음"));
 
-		// 트리 구조
-		List<BoardReplyDTO> result = new ArrayList<>();
+        reply.changeEnabled(0);
+    }
 
-		for (BoardReplyDTO dto : dtoMap.values()) {
+    ///////////////////
+    /// 관리자 댓글 목록 (핵심)
+    ///////////////////
+    @Override
+    public PageResponseDTO<BoardReplyDTO> adminReplyList(SearchDTO searchDTO) {
 
-			if (dto.getParentReplyNo() == null) {
-				// 부모 댓글
-				result.add(dto);
-			} else {
-				// 자식 댓글 → 부모에 연결
-				BoardReplyDTO parent = dtoMap.get(dto.getParentReplyNo());
-				if (parent != null) {
-					parent.getChildList().add(dto);
-				}
-			}
-		}
+        Pageable pageable = PageRequest.of(
+                searchDTO.getPage() - 1,
+                searchDTO.getSize(),
+                Sort.by("replyNo").descending()
+        );
 
-		return result;
-	}
+        String keyword = searchDTO.getKeyword();
+        Integer enabled = searchDTO.getEnabled();
 
-	// 댓글 수정
-	@Override
-	public void modify(BoardReplyDTO dto) {
+        // 🔥 빈값 방어 (이거 중요)
+        if (keyword != null && keyword.trim().isEmpty()) {
+            keyword = null;
+        }
 
-		BoardReply reply = boardReplyRepository.findById(dto.getReplyNo()).orElseThrow();
+        // 🔥 이제 이거 한줄로 끝
+        Page<BoardReply> result =
+                boardReplyRepository.searchAll(enabled, keyword, pageable);
 
-		reply.changeContent(dto.getContent());
-	}
+        List<BoardReplyDTO> dtoList = result.getContent().stream()
+                .map(reply -> BoardReplyDTO.builder()
+                        .replyNo(reply.getReplyNo())
+                        .boardNo(reply.getBoard().getBoardNo())
+                        .email(reply.getMember().getEmail())
+                        .content(reply.getContent())
+                        .enabled(reply.getEnabled())
+                        .build())
+                .toList();
 
-	// 댓글 삭제 (논리삭제)
-	@Override
-	public void remove(Long replyNo) {
+        return PageResponseDTO.<BoardReplyDTO>withAll()
+                .dtoList(dtoList)
+                .pageRequestDTO(searchDTO)
+                .totalCount(result.getTotalElements())
+                .build();
+    }
 
-		BoardReply reply = boardReplyRepository.findById(replyNo).orElseThrow();
+    ///////////////////
+    /// 관리자 삭제
+    ///////////////////
+    @Override
+    public void adminRemove(Long replyNo) {
 
-		reply.changeEnabled(0);
-	}
+        BoardReply reply = boardReplyRepository.findById(replyNo)
+                .orElseThrow(() -> new RuntimeException("댓글 없음"));
 
-	///////////////////
-	/// 관리자 전용
-	//////////////////
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<BoardReplyDTO> adminList(Integer boardNo) {
-
-		// 🔥 enabled 조건 없음
-		List<BoardReply> replyList = boardReplyRepository.findByBoardBoardNo(boardNo);
-
-		// DTO 변환 + Map 생성
-		Map<Long, BoardReplyDTO> dtoMap = replyList.stream()
-				.map(reply -> BoardReplyDTO.builder().replyNo(reply.getReplyNo()).boardNo(reply.getBoard().getBoardNo())
-						.email(reply.getMember().getEmail()).content(reply.getContent())
-						.parentReplyNo(reply.getParent() != null ? reply.getParent().getReplyNo() : null)
-						.enabled(reply.getEnabled()) // 🔥 중요 (삭제 여부 표시)
-						.regDate(reply.getRegDate()).updDate(reply.getUpdDate()).build())
-				.collect(Collectors.toMap(BoardReplyDTO::getReplyNo, dto -> dto));
-
-		// 트리 구조
-		List<BoardReplyDTO> result = new ArrayList<>();
-
-		for (BoardReplyDTO dto : dtoMap.values()) {
-
-			if (dto.getParentReplyNo() == null) {
-				result.add(dto);
-			} else {
-				BoardReplyDTO parent = dtoMap.get(dto.getParentReplyNo());
-				if (parent != null) {
-					parent.getChildList().add(dto);
-				}
-			}
-		}
-
-		return result;
-	}
-
-	@Override
-	public void adminRemove(Long replyNo) {
-
-		BoardReply reply = boardReplyRepository.findById(replyNo).orElseThrow();
-
-		//  관리자 삭제
-		reply.changeEnabled(0);
-	}
+        reply.changeEnabled(0);
+    }
 }

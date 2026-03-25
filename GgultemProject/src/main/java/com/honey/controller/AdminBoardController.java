@@ -2,6 +2,7 @@ package com.honey.controller;
 
 import java.util.Map;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/admin/board")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('ADMIN')")
 public class AdminBoardController {
 	private final BoardService boardService;
 
@@ -34,10 +34,6 @@ public class AdminBoardController {
 		return boardService.get(boardNo);
 	}
 	
-	@GetMapping("/reply/list")
-	public PageResponseDTO<?> replyList(SearchDTO searchDTO) {
-	    return boardService.adminReplyList(searchDTO);
-	}
 
 	// 게시글 강제 삭제
 	@PutMapping("/{boardNo}")
@@ -46,10 +42,5 @@ public class AdminBoardController {
 	    return Map.of("result", "success");
 	}
 
-	// 댓글 삭제
-	@PutMapping("/reply/{replyNo}")
-	public Map<String, String> adminRemoveReply(@PathVariable Long replyNo) {
-	    boardService.removeReply(replyNo);
-	    return Map.of("result", "success");
-	}
+	
 }
