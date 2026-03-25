@@ -15,5 +15,8 @@ public class SearchDTO extends PageRequestDTO {
 	private String keyword;
 	
 	//관리자용
-	private Integer enabled;
+	private String enabled;
+	
+	//비즈니스멤버용
+	private String businessVerified;
 }
