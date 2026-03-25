@@ -70,7 +70,10 @@ public class CartServiceImpl implements CartService {
 	public PageResponseDTO<CartDTO> list(SearchDTO searchDTO, String email) {
 		Pageable pageable = PageRequest.of(searchDTO.getPage() -1, searchDTO.getSize(),
 				Sort.by("id").descending());
-		Page<Cart> result = null;
+		Page<Cart> result = cartRepository.searchByCondition(
+				searchDTO.getSearchType(), 
+				searchDTO.getKeyword(), 
+				pageable, email);
 		
 		if(searchDTO != null && !searchDTO.getKeyword().isEmpty()) {
 			result = cartRepository.searchByCondition(
