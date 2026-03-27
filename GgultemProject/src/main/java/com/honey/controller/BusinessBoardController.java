@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.honey.dto.BusinessBoardDTO;
-import com.honey.dto.MemberDTO;
+import com.honey.dto.BusinessStatsDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 import com.honey.service.BusinessBoardService;
@@ -63,6 +63,11 @@ public class BusinessBoardController {
 		return businessBoardService.list(searchDTO);
 	}
 	
+	@GetMapping("/deletelist")
+	public PageResponseDTO<BusinessBoardDTO> deleteList(SearchDTO searchDTO) {
+		return businessBoardService.deleteList(searchDTO);
+	}
+	
 	@GetMapping("/approve/{no}") // 비즈니스 회원 게시판 승인로직
 	public Map<String, String> approve(@PathVariable(name = "no") Long no) {
 		
@@ -95,5 +100,7 @@ public class BusinessBoardController {
 		
 		return Map.of("RESULT", "SUCCESS");
 	}
+	
+
 	
 }

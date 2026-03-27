@@ -1,10 +1,10 @@
 package com.honey.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.honey.dto.BusinessBoardDTO;
-import com.honey.dto.MemberDTO;
-import com.honey.dto.PageRequestDTO;
+import com.honey.dto.BusinessStatsDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
 
@@ -16,6 +16,8 @@ public interface BusinessBoardService {
 
 	public PageResponseDTO<BusinessBoardDTO> list(SearchDTO searchDTO);
 
+	public PageResponseDTO<BusinessBoardDTO> deleteList(SearchDTO searchDTO);
+
 	public void approve(Long no);
 
 	public void modify(BusinessBoardDTO businessBoardDTO, BusinessBoardDTO oldBusinessBoardDTO);
@@ -24,10 +26,12 @@ public interface BusinessBoardService {
 
 	public List<BusinessBoardDTO> adPSlist();
 
-	public void viewCountAdd(Long no);
+	public void viewCountAdd(Long no, String email);
 
 	public List<BusinessBoardDTO> adPlList();
 
 	public void reject(Long no);
+
+	BusinessStatsDTO getStats(String email, String start, String end);
 
 }
