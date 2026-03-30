@@ -106,7 +106,7 @@ public class BoardServiceImpl implements BoardService {
             board.setContent(boardDTO.getContent());
 
             String text = extractText(boardDTO.getContent());
-            board.changeContentText(text); // 🔥 핵심 추가
+            board.changeContentText(text); 
         }
     }
 
