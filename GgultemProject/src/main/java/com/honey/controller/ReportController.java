@@ -23,7 +23,7 @@ public class ReportController {
     private final ReportService reportService;
     private final CustomFileUtil fileUtil;
 
-    @PostMapping("/")
+    @PostMapping("/list")
     public Map<String, Long> register(ReportDTO reportDTO) {
         // 1. 파일 저장 처리. 증거 스크린샷 첨부를 해도, 안 해도 되도록.
     	if (reportDTO.getFiles() != null && !reportDTO.getFiles().isEmpty()) {
