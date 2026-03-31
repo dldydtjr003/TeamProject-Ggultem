@@ -15,7 +15,6 @@ import com.honey.domain.ItemBoard;
 import com.honey.domain.Member;
 import com.honey.dto.ItemBoardDTO;
 import com.honey.dto.ItemBoardSearchDTO;
-import com.honey.dto.PageRequestDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.repository.ItemBoardRepository;
 import com.honey.repository.MemberRepository;
@@ -74,7 +73,8 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 		ItemBoard itemBoard = ItemBoard.builder().title(itemBoardDTO.getTitle()).writer(itemBoardDTO.getWriter())
 				.price(itemBoardDTO.getPrice()).content(itemBoardDTO.getContent()).category(itemBoardDTO.getCategory())
 				.location(itemBoardDTO.getLocation()).itemUrl(itemBoardDTO.getItemUrl()).member(member)
-				.pictureUrl(itemBoardDTO.getPictureUrl()).enabled(1).status("false").build();
+				.lat(itemBoardDTO.getLat()).lng(itemBoardDTO.getLng()).pictureUrl(itemBoardDTO.getPictureUrl())
+				.enabled(1).status("false").build();
 
 		List<String> uploadFileNames = itemBoardDTO.getUploadFileNames();
 
@@ -104,12 +104,11 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 				: searchDTO.getCategory();
 		String location = (searchDTO.getLocation() == null || searchDTO.getLocation().isEmpty()) ? "all"
 				: searchDTO.getLocation();
-		String email = (searchDTO.getEmail() == null || searchDTO.getEmail().isEmpty()) ? "all"
-				: searchDTO.getEmail();
+		String email = (searchDTO.getEmail() == null || searchDTO.getEmail().isEmpty()) ? "all" : searchDTO.getEmail();
 
 		// 3. 레포지토리 호출 (수정된 Repository의 searchWithFilter 쿼리 사용)
 		Page<ItemBoard> result = itemBoardRepository.searchWithFilter(searchType, keyword, status, category, location,
-				email,pageable);
+				email, pageable);
 
 		// 4. 엔티티(Entity) 리스트를 DTO 리스트로 변환
 		List<ItemBoardDTO> dtoList = result.getContent().stream().map(itemBoard -> {
@@ -156,6 +155,8 @@ public class ItemBoardServiceImpl implements ItemBoardService {
 		itemBoard.changeContent(itemBoardDTO.getContent());
 		itemBoard.changeCategory(itemBoardDTO.getCategory());
 		itemBoard.changeLocation(itemBoardDTO.getLocation());
+		itemBoard.changeLat(itemBoardDTO.getLat());
+	    itemBoard.changeLng(itemBoardDTO.getLng());
 
 		if (itemBoardDTO.getStatus() != null) {
 			String status = itemBoardDTO.getStatus().trim();
