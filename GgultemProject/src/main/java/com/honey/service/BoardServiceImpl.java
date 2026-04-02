@@ -15,6 +15,7 @@ import com.honey.domain.Member;
 import com.honey.dto.BoardDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
+import com.honey.repository.BoardReplyRepository;
 import com.honey.repository.BoardRepository;
 import com.honey.repository.MemberRepository;
 
@@ -29,6 +30,7 @@ public class BoardServiceImpl implements BoardService {
 	private final ModelMapper modelMapper;
 	private final BoardRepository boardRepository;
 	private final MemberRepository memberRepository;
+	private final BoardReplyRepository boardReplyRepository;
 
 	///////////////////
 	/// HTML 제거 코드
@@ -50,15 +52,8 @@ public class BoardServiceImpl implements BoardService {
 
 		String text = extractText(boardDTO.getContent());
 
-		Board board = Board.builder()
-				.title(boardDTO.getTitle())
-				.writer(member.getNickname())
-				.content(boardDTO.getContent())
-				.contentText(text)
-				.viewCount(0)
-				.enabled(1)
-				.member(member)
-				.build();
+		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname())
+				.content(boardDTO.getContent()).contentText(text).viewCount(0).enabled(1).member(member).build();
 
 		return boardRepository.save(board).getBoardNo();
 	}
@@ -122,34 +117,45 @@ public class BoardServiceImpl implements BoardService {
 
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
 
-		Page<Object[]> result;
+		Page<Board> result;
 
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
+		String keyword = searchDTO.getKeyword();
 
-			result = boardRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
+		// =========================
+		// 검색 or 전체
+		// =========================
+		if (keyword != null && !keyword.trim().isEmpty()) {
+
+			result = boardRepository.searchByCondition(searchDTO.getSearchType(), keyword, pageable);
 
 		} else {
-			result = boardRepository.findAllActive(pageable);
+
+			// keyword 없으면 그냥 전체 조회
+			result = boardRepository.searchByCondition("all", "", pageable);
 		}
 
-		List<BoardDTO> dtoList = result.getContent().stream().map(arr -> {
-
-			Board board = (Board) arr[0];
-			Long replyCount = (Long) arr[1];
+		// =========================
+		// DTO 변환
+		// =========================
+		List<BoardDTO> dtoList = result.getContent().stream().map(board -> {
 
 			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-			dto.setReplyCount(replyCount.intValue()); // 댓글수
+			// 댓글 수 따로 조회 (중요)
+			int replyCount = boardReplyRepository.countByBoardAndEnabled(board, 1);
+			dto.setReplyCount(replyCount);
 
+			// 파일 처리
 			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
 
 			dto.setUploadFileNames(fileNames);
 
 			return dto;
+
 		}).toList();
 
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
+		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).totalCount((int) result.getTotalElements())
+				.pageRequestDTO(searchDTO).build();
 	}
 
 ///////////////////

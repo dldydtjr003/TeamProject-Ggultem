@@ -118,19 +118,19 @@ public class BoardReplyServiceImpl implements BoardReplyService {
                 Sort.by("replyNo").descending()
         );
 
-        // 🔥 keyword 처리
+        //  keyword 처리
         String keyword = searchDTO.getKeyword();
         if (keyword != null && keyword.trim().isEmpty()) {
             keyword = null;
         }
 
-        // 🔥 enabled null 방어 (핵심 수정)
+        //  enabled null 방어 
         Integer enabled = null;
         if (searchDTO.getEnabled() != null && !searchDTO.getEnabled().isEmpty()) {
             enabled = Integer.parseInt(searchDTO.getEnabled());
         }
 
-        // 🔥 검색 실행
+        //  검색 실행
         Page<BoardReply> result =
                 boardReplyRepository.searchAll(enabled, keyword, pageable);
 
