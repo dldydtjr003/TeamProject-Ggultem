@@ -15,6 +15,7 @@ import com.honey.domain.Member;
 import com.honey.dto.BoardDTO;
 import com.honey.dto.PageResponseDTO;
 import com.honey.dto.SearchDTO;
+import com.honey.repository.BoardReplyRepository;
 import com.honey.repository.BoardRepository;
 import com.honey.repository.MemberRepository;
 
@@ -29,6 +30,7 @@ public class BoardServiceImpl implements BoardService {
 	private final ModelMapper modelMapper;
 	private final BoardRepository boardRepository;
 	private final MemberRepository memberRepository;
+	private final BoardReplyRepository boardReplyRepository;
 
 	///////////////////
 	/// HTML 제거 코드
@@ -50,15 +52,8 @@ public class BoardServiceImpl implements BoardService {
 
 		String text = extractText(boardDTO.getContent());
 
-		Board board = Board.builder()
-				.title(boardDTO.getTitle())
-				.writer(member.getNickname())
-				.content(boardDTO.getContent())
-				.contentText(text)
-				.viewCount(0)
-				.enabled(1)
-				.member(member)
-				.build();
+		Board board = Board.builder().title(boardDTO.getTitle()).writer(member.getNickname())
+				.content(boardDTO.getContent()).contentText(text).viewCount(0).enabled(1).member(member).build();
 
 		return boardRepository.save(board).getBoardNo();
 	}
@@ -122,15 +117,18 @@ public class BoardServiceImpl implements BoardService {
 
 		Pageable pageable = PageRequest.of(searchDTO.getPage() - 1, searchDTO.getSize());
 
-		Page<Object[]> result;
+		String keyword = searchDTO.getKeyword();
+		String searchType = searchDTO.getSearchType();
 
-		if (searchDTO.getKeyword() != null && !searchDTO.getKeyword().isEmpty()) {
-
-			result = boardRepository.searchByCondition(searchDTO.getSearchType(), searchDTO.getKeyword(), pageable);
-
-		} else {
-			result = boardRepository.findAllActive(pageable);
+		if (keyword != null) {
+			keyword = keyword.trim();
 		}
+
+		if (keyword != null && keyword.isEmpty()) {
+			keyword = null;
+		}
+
+		Page<Object[]> result = boardRepository.searchByCondition(searchType, keyword, pageable);
 
 		List<BoardDTO> dtoList = result.getContent().stream().map(arr -> {
 
@@ -139,17 +137,14 @@ public class BoardServiceImpl implements BoardService {
 
 			BoardDTO dto = modelMapper.map(board, BoardDTO.class);
 
-			dto.setReplyCount(replyCount.intValue()); // 댓글수
-
-			List<String> fileNames = board.getBoardImage().stream().map(img -> img.getFileName()).toList();
-
-			dto.setUploadFileNames(fileNames);
+			dto.setReplyCount(replyCount.intValue());
 
 			return dto;
+
 		}).toList();
 
-		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).pageRequestDTO(searchDTO)
-				.totalCount(result.getTotalElements()).build();
+		return PageResponseDTO.<BoardDTO>withAll().dtoList(dtoList).totalCount((int) result.getTotalElements())
+				.pageRequestDTO(searchDTO).build();
 	}
 
 ///////////////////
@@ -162,7 +157,12 @@ public class BoardServiceImpl implements BoardService {
 				Sort.by("boardNo").descending());
 
 		String keyword = searchDTO.getKeyword();
-		if (keyword != null && keyword.trim().isEmpty()) {
+
+		if (keyword != null) {
+			keyword = keyword.trim();
+		}
+
+		if (keyword == null || keyword.isEmpty()) {
 			keyword = null;
 		}
 
