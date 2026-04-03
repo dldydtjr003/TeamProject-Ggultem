@@ -63,7 +63,9 @@ public class BoardReplyServiceImpl implements BoardReplyService {
     @Override
     public List<BoardReplyDTO> list(Integer boardNo) {
 
-    	return boardReplyRepository.findByBoardBoardNo(boardNo).stream()
+    	return boardReplyRepository
+    	        .findByBoardBoardNoAndEnabledOrderByReplyNoAsc(boardNo, 1)
+    	        .stream()
                 .map(reply -> BoardReplyDTO.builder()
                         .replyNo(reply.getReplyNo())
                         .boardNo(reply.getBoard().getBoardNo())
