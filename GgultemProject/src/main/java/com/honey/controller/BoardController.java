@@ -129,7 +129,6 @@ public class BoardController {
 	}
 
 	// 파일업로드
-	@CrossOrigin(origins = "https://www.ggultem.shop")
 	@PostMapping("/upload")
 	public Map<String, String> upload(@RequestParam("file") MultipartFile file) {
 
