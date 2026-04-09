@@ -77,7 +77,8 @@ public class CustomSecurityConfig {
 	    CorsConfiguration configuration = new CorsConfiguration();
 
 	    // 1. 허용할 도메인 설정 (패턴 대신 리스트로 명시)
-	    configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+	    configuration.setAllowedOrigins(Arrays.asList("https://team-project-ggultem-react.vercel.app",
+	    		"http://localhost:5173", "https://ggultem.shop", "https://www.ggultem.shop"));
 	    
 	    // 2. 허용할 HTTP 메서드
 	    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
