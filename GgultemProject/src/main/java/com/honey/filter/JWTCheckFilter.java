@@ -88,6 +88,8 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 	        lowercasePath.startsWith("/member/kakao") ||
 	        lowercasePath.startsWith("/admin/member/") || // 중복확인, 비번재설정 한방에 해결!
 	        lowercasePath.startsWith("/api/mail/") ||
+	        lowercasePath.startsWith("/member/refresh") ||
+	        lowercasePath.startsWith("/mypage/") ||
 	        lowercasePath.startsWith("/board/view/") || // 상세페이지 (가변경로 대응)
 	        lowercasePath.startsWith("/itemboard/") ||
 	        lowercasePath.startsWith("/ws") ||
