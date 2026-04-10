@@ -71,7 +71,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 			printWriter.close();
 		}
 	}
-
+	/*
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
 	    String path = request.getRequestURI();
@@ -90,7 +90,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 	        lowercasePath.startsWith("/api/mail/") ||
 	        lowercasePath.startsWith("/member/refresh") ||
 	        lowercasePath.startsWith("/mypage/") ||
-	        lowercasePath.startsWith("/board/view/") || // 상세페이지 (가변경로 대응)
+	        lowercasePath.startsWith("/board/") ||
 	        lowercasePath.startsWith("/itemboard/") ||
 	        lowercasePath.startsWith("/ws") ||
 	        path.equals("/") ) {
@@ -98,6 +98,12 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 	    }
 
 	    return false;
+	}
+	*/
+	//배포 후 기능 테스트를 위한 전체 예외처리
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+	    return true; 
 	}
 
 }
