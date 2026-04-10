@@ -91,11 +91,13 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 	    // 3. 기타 예외 경로들
 	    if (path.startsWith("/member/kakao") || 
 	        path.startsWith("/member/google") || 
+	        path.equals("/member/register") ||
 	        path.equals("/member/refresh") ||
+	        path.equals("/member/findemail") ||
+	        path.startsWith("/board/list") || 
 	        path.startsWith("/board/view/") || 
 	        path.startsWith("/board/upload") ||
-	        path.startsWith("/itemBoard") || 
-	        path.startsWith("/api/itemBoard") ||
+	        path.equals("itemBoard/list") || 
 	        path.startsWith("/ws")) {
 	        return true;
 	    }
