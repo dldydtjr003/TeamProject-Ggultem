@@ -28,6 +28,11 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 		log.info("--------------------  JWTCheckFilter ------------------------------------------------------ ");
 		String authHeaderStr = request.getHeader("Authorization");
+		// ✅ 토큰 없으면 그냥 통과 (인증 없이 접근 가능한 API용)
+	    if (authHeaderStr == null || !authHeaderStr.startsWith("Bearer ")) {
+	        filterChain.doFilter(request, response);
+	        return;
+	    }
 		try {
 			// Bearer accestoken ............... 토큰이 정상적이면 그대로 요구사항진행
 			// Bearer[공백]accestoken... "Bearer " 접두사를 제외한 JWT 토큰만 추출
