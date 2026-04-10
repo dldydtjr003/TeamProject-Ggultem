@@ -42,5 +42,5 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             sudo fuser -k 8080/tcp || true
-            cd /home/ubuntu/ggultem-deploy
+            cd /home/ubuntu/ggultem-deploy/target
             nohup java -jar *.jar > /dev/null 2>&1 &
