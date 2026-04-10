@@ -82,7 +82,6 @@ public class NoticeController {
 	
 	
 	// 파일 업로드 저장공간 마련
-	@CrossOrigin(origins = "http://localhost:5173")
 	@GetMapping("/view/{uploadFileName}")
     public ResponseEntity<Resource> viewFileGET(@PathVariable(name = "uploadFileName") String uploadFileName) {
         return fileUtil.getFile(uploadFileName);

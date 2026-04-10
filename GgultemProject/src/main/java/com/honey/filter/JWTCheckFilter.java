@@ -74,36 +74,24 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-	    // 1. OPTIONS 요청(Preflight)은 무조건 통과
-	    if (request.getMethod().equals("OPTIONS")) {
-	        return true;
-	    }
-
 	    String path = request.getRequestURI();
-	    log.info("check uri: " + path);
+	    String method = request.getMethod();
 
-	    // 2. 로그인 경로 예외 처리 (매우 중요! 🧤)
-	    // 로그에 찍힌 주소(/login)와 일치해야 합니다.
-	    if (path.equals("/login") || path.startsWith("/api/member/login")) {
-	        return true;
-	    }
+	    // 1. OPTIONS 요청은 브라우저의 사전 확인용이므로 무조건 통과
+	    if (method.equals("OPTIONS")) return true;
 
-	    // 3. 기타 예외 경로들
-	    if (path.startsWith("/member/kakao") || 
-	        path.startsWith("/member/google") || 
-	        path.equals("/member/register") ||
-	        path.equals("/member/refresh") ||
-	        path.equals("/member/findemail") ||
-	        path.startsWith("/board/list") || 
-	        path.startsWith("/board/view/") || 
-	        path.startsWith("/board/upload") ||
-	        path.equals("itemBoard/list") || 
-	        path.startsWith("/ws")) {
-	        return true;
-	    }
-
-	    // 4. 메인 페이지 등 기본 경로
-	    if (path.equals("/") || path.isEmpty()) {
+	    // 2. 대소문자 무시하고 '로그인 안 해도 되는' 경로들 🧤
+	    String lowercasePath = path.toLowerCase();
+	    
+	    if (lowercasePath.startsWith("/login") || 
+	        lowercasePath.startsWith("/api/member/login") ||
+	        lowercasePath.startsWith("/member/kakao") ||
+	        lowercasePath.startsWith("/admin/member/") || // 중복확인, 비번재설정 한방에 해결!
+	        lowercasePath.startsWith("/api/mail/") ||
+	        lowercasePath.startsWith("/board/view/") || // 상세페이지 (가변경로 대응)
+	        lowercasePath.startsWith("/itemboard/") ||
+	        lowercasePath.startsWith("/ws") ||
+	        path.equals("/") ) {
 	        return true;
 	    }
 
